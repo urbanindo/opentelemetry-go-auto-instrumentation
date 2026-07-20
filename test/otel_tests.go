@@ -27,4 +27,5 @@ func TestSpanFromContext(t *testing.T, env ...string) {
 	RunGoBuild(t, "go", "build", "--", "test_span_from_context.go")
 	stdout, _ := RunApp(t, "test_span_from_context", env...)
 	ExpectContains(t, stdout, "GET /otel")
+	ExpectContains(t, stdout, "SpanFromContext allocs: 0")
 }

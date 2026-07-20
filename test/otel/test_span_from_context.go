@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"go.opentelemetry.io/otel/trace"
 	"net/http"
+	"testing"
 	"time"
 )
 
@@ -32,6 +33,10 @@ func main() {
 			if !span.SpanContext().IsValid() {
 				panic("span should be valid")
 			}
+			allocs := testing.AllocsPerRun(1000, func() {
+				_ = trace.SpanFromContext(context.Background())
+			})
+			fmt.Printf("SpanFromContext allocs: %.0f\n", allocs)
 			fmt.Printf("%v\n", span)
 			writer.Write([]byte("hello otel"))
 		})
