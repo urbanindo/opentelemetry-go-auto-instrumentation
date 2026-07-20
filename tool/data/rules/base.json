@@ -137,7 +137,7 @@
   {
     "ImportPath": "go.opentelemetry.io/otel/trace",
     "Function": "SpanFromContext",
-    "OnExit": "if !retVal0.SpanContext().IsValid() { if span := spanFromGLS(); span != nil { retVal0 = span } }",
+    "OnExit": "defer func() { if err := recover(); err != nil { println(\"failed to exec onExit hook\", \"SpanFromContext\") } }(); if !retVal0.SpanContext().IsValid() { if span := spanFromGLS(); span != nil { retVal0 = span } }",
     "UseRaw": true
   },
   {

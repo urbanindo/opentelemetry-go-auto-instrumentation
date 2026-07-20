@@ -23,6 +23,59 @@ import (
 	"time"
 )
 
+type panickingSpan struct {
+	trace.Span
+}
+
+func (*panickingSpan) SpanContext() trace.SpanContext {
+	panic("span context panic")
+}
+
+type panickingContext struct {
+	context.Context
+	value any
+}
+
+func (ctx panickingContext) Value(any) any {
+	panic(ctx.value)
+}
+
+func assertFallbackPanicIsolated() {
+	defer func() {
+		if err := recover(); err != nil {
+			panic(fmt.Sprintf("fallback panic escaped: %v", err))
+		}
+	}()
+	ctx := trace.ContextWithSpan(context.Background(), (*panickingSpan)(nil))
+	_ = trace.SpanFromContext(ctx)
+}
+
+func assertOriginalPanicPreserved() {
+	marker := &struct{}{}
+	defer func() {
+		if err := recover(); err != marker {
+			panic(fmt.Sprintf("original panic replaced: %v", err))
+		}
+	}()
+	_ = trace.SpanFromContext(panickingContext{
+		Context: context.Background(),
+		value:   marker,
+	})
+}
+
+func assertValidContextSpanPreserved() {
+	expected := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: trace.TraceID{1},
+		SpanID:  trace.SpanID{2},
+	})
+	ctx := trace.ContextWithSpanContext(context.Background(), expected)
+	actual := trace.SpanFromContext(ctx).SpanContext()
+	if actual.TraceID() != expected.TraceID() ||
+		actual.SpanID() != expected.SpanID() {
+		panic("valid context span should take precedence over GLS")
+	}
+}
+
 func main() {
 	go func() {
 		http.HandleFunc("/otel", func(writer http.ResponseWriter, request *http.Request) {
@@ -33,6 +86,9 @@ func main() {
 			if !span.SpanContext().IsValid() {
 				panic("span should be valid")
 			}
+			assertFallbackPanicIsolated()
+			assertOriginalPanicPreserved()
+			assertValidContextSpanPreserved()
 			allocs := testing.AllocsPerRun(1000, func() {
 				_ = trace.SpanFromContext(context.Background())
 			})
