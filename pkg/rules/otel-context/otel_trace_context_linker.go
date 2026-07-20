@@ -1,4 +1,6 @@
-// Copyright (c) 2024 Alibaba Group Holding Ltd.
+//go:build ignore
+
+// Copyright (c) 2026 PropertyGuru Group
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +14,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package otel_context
+package trace
 
-import (
-	_ "unsafe"
+import _ "unsafe"
 
-	"github.com/alibaba/loongsuite-go-agent/pkg/api"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	spectrace "go.opentelemetry.io/otel/trace"
-)
-
-//go:linkname spanFromContextOnExit go.opentelemetry.io/otel/trace.spanFromContextOnExit
-func spanFromContextOnExit(call api.CallContext, span spectrace.Span) {
-	if !span.SpanContext().IsValid() {
-		call.SetReturnVal(0, sdktrace.SpanFromGLS())
-	}
-	return
-}
+//go:linkname spanFromGLS go.opentelemetry.io/otel/sdk/trace.SpanFromGLS
+func spanFromGLS() Span

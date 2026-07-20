@@ -24,7 +24,7 @@ import (
 // @@This value is specified by the build system.
 // This is the version of the tool, which will be printed when the -version flag
 // is passed.
-var ToolVersion = "1.0.0"
+var ToolVersion = "0.1.19"
 
 func PrintVersion() {
 	name, err := util.GetToolName()
